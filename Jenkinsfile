@@ -5,6 +5,9 @@ pipeline {
             args '-v /root/.m2:/root/.m2'
         }
     }
+    environment {
+        registry = "zenrabbit/k8scicd"
+    }
     stages {
         stage('Build') {
             steps {
@@ -21,5 +24,19 @@ pipeline {
                 }
             }
         }
+        stage('Publish') {
+            environment {
+                registryCredential = 'docker_hub'
+            }
+            steps{
+                script {
+                    def appimage = docker.build registry + ":$BUILD_NUMBER"
+                    docker.withRegistry( '', registryCredential ) {
+                        appimage.push()
+                        appimage.push('latest')
+                    }
+                }
+            }
+        }       
     }
 }
